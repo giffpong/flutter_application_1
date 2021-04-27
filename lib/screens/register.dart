@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_1/screens/my_service.dart';
 
 class Register extends StatefulWidget {
   @override
@@ -14,12 +16,87 @@ class _RegisterState extends State<Register> {
   // Method
   Widget registerButton() {
     return IconButton(
-        icon: Icon(Icons.cloud_upload),
+        icon: Icon(Icons.fact_check),
+        padding: EdgeInsets.only(right: 20.0),
+        tooltip: 'Register',
         onPressed: () {
           if (formKey.currentState.validate()) {
             formKey.currentState.save();
+            registerThread();
           }
         });
+    // return RaisedButton(
+    //     child: Text(
+    //       'Sign Up',
+    //       style: TextStyle(color: Colors.white),
+    //     ),
+    //     color: Colors.blue.shade300,
+    //     onPressed: () {
+    //       if (formKey.currentState.validate()) {
+    //         formKey.currentState.save();
+    //         registerThread();
+    //       }
+    //     });
+  }
+
+  Future<void> registerThread() async {
+    FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+    await firebaseAuth
+        .createUserWithEmailAndPassword(
+            email: emailString, password: passwordString)
+        .then((response) {
+      print('Register Success for Email = $emailString');
+      setupDisplayName();
+    }).catchError((response) {
+      String title = response.code;
+      String message = response.message;
+      myAlert(title, message);
+    });
+  }
+
+  Future<void> setupDisplayName() async {
+    FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+    var user = firebaseAuth.currentUser;
+    if (user != null) {
+      user.updateProfile(displayName: nameString);
+      MaterialPageRoute materialPageRoute =
+          MaterialPageRoute(builder: (BuildContext context) => MyService());
+      Navigator.of(context).pushAndRemoveUntil(
+          materialPageRoute, (Route<dynamic> route) => false);
+    }
+  }
+
+  void myAlert(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: ListTile(
+            leading: Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 48.0,
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          content: Text(message),
+          actions: [
+            FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'))
+          ],
+        );
+      },
+    );
+    ;
   }
 
   Widget nameText() {
@@ -92,7 +169,6 @@ class _RegisterState extends State<Register> {
 
   Widget passwordText() {
     return TextFormField(
-      keyboardType: TextInputType.visiblePassword,
       style: TextStyle(
         color: Colors.blue.shade800,
       ),
@@ -141,6 +217,10 @@ class _RegisterState extends State<Register> {
             nameText(),
             emailText(),
             passwordText(),
+            // SizedBox(
+            //   height: 40.0,
+            // ),
+            // registerButton(),
           ],
         ),
       ),

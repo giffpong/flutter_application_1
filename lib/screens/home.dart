@@ -1,86 +1,113 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
+import 'package:flutter_application_1/screens/authen.dart';
+import 'package:flutter_application_1/screens/my_service.dart';
+import 'package:flutter_application_1/screens/register.dart';
 
-class RandomWords extends StatefulWidget {
+class Home extends StatefulWidget {
   @override
-  _RandomWordsState createState() => _RandomWordsState();
+  _HomeState createState() => _HomeState();
 }
 
-class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
-  final _biggerFont = TextStyle(fontSize: 18.0);
-  final _saved = Set<WordPair>();
-
+class _HomeState extends State<Home> {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Startup Name Generator'),
-        actions: [IconButton(icon: Icon(Icons.list), onPressed: _pushSaved)],
-      ),
-      body: _buildSuggestions(),
+  void initState() {
+    super.initState();
+    checkStatus();
+  }
+
+  Future<void> checkStatus() async {
+    FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+    User firebaseUser = await firebaseAuth.currentUser;
+    if (firebaseUser != null) {
+      MaterialPageRoute materialPageRoute =
+          MaterialPageRoute(builder: (BuildContext context) => MyService());
+      Navigator.of(context).pushAndRemoveUntil(
+          materialPageRoute, (Route<dynamic> route) => false);
+    }
+  }
+
+  Widget showLogo() {
+    return Container(
+      child: Image.asset('images/profile-logo.png'),
+      width: 120.0,
+      height: 150.0,
     );
   }
 
-  Widget _buildSuggestions() {
-    return ListView.builder(
-        padding: EdgeInsets.all(16.0),
-        itemBuilder: (context, i) {
-          if (i.isOdd) return Divider();
-
-          final index = i ~/ 2;
-          if (index >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10));
-          }
-          return _buildRow(_suggestions[index]);
-        });
+  Widget showAppName() {
+    return Text(
+      'CEREAL APP',
+      style: TextStyle(
+          fontSize: 30.0,
+          color: Colors.blue.shade300,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'OrelegaOne'),
+    );
   }
 
-  Widget _buildRow(WordPair pair) {
-    final alreadySaved = _saved.contains(pair);
-    return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
+  Widget signInButton() {
+    return RaisedButton(
+      child: Text(
+        'Sign In',
+        style: TextStyle(color: Colors.white),
       ),
-      trailing: Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else {
-            _saved.add(pair);
-          }
-        });
+      onPressed: () {
+        MaterialPageRoute materialPageRoute =
+            MaterialPageRoute(builder: (BuildContext context) => Authen());
+        Navigator.of(context).push(materialPageRoute);
+      },
+      color: Colors.blue.shade300,
+    );
+  }
+
+  Widget signUpButton() {
+    return OutlineButton(
+      child: Text('Sign Up'),
+      onPressed: () {
+        MaterialPageRoute materialPageRoute =
+            MaterialPageRoute(builder: (BuildContext context) => Register());
+        Navigator.of(context).push(materialPageRoute);
       },
     );
   }
 
-  void _pushSaved() {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-      final tiles = _saved.map((WordPair pair) {
-        return ListTile(
-            title: Text(
-          pair.asPascalCase,
-          style: _biggerFont,
-        ));
-      });
-      final divided = ListTile.divideTiles(
-        context: context,
-        tiles: tiles,
-      ).toList();
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('Saved Suggestions'),
+  Widget showButton() {
+    return Row(
+      children: <Widget>[
+        signInButton(),
+        SizedBox(
+          width: 4.0,
         ),
-        body: ListView(
-          children: divided,
+        signUpButton()
+      ],
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+              gradient: RadialGradient(
+                  colors: [Colors.white, Colors.blue.shade200], radius: 1.0)),
+          child: Center(
+            child: Column(
+              children: <Widget>[
+                showLogo(),
+                showAppName(),
+                SizedBox(
+                  height: 8.0,
+                ),
+                showButton()
+              ],
+              mainAxisSize: MainAxisSize.min,
+            ),
+          ),
         ),
-      );
-    }));
+      ),
+    );
   }
 }
