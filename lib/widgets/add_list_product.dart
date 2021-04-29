@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_application_1/screens/my_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AddListProduct extends StatefulWidget {
@@ -11,7 +15,7 @@ class AddListProduct extends StatefulWidget {
 class _AddListProductState extends State<AddListProduct> {
   // Field
   File file;
-  String name, detail;
+  String name, detail, urlPicture;
 
   // Method
   Widget uploadButton() {
@@ -26,6 +30,13 @@ class _AddListProductState extends State<AddListProduct> {
               if (file == null) {
                 showAlert('No Picture for Upload',
                     'Please Click Camera or Gallery icon');
+              } else if (name == null ||
+                  name.isEmpty ||
+                  detail == null ||
+                  detail.isEmpty) {
+                showAlert('Empty Space', 'Plese Fill Every Blank Field');
+              } else {
+                uploadPictureToStorage();
               }
             },
             icon: Icon(
@@ -42,6 +53,35 @@ class _AddListProductState extends State<AddListProduct> {
         ),
       ],
     );
+  }
+
+  Future<void> uploadPictureToStorage() async {
+    Random random = Random();
+    int i = random.nextInt(100000);
+
+    FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+    Reference reference = firebaseStorage.ref().child('Product/product$i.jpg');
+    TaskSnapshot taskSnapshot = await reference.putFile(file);
+    urlPicture = await taskSnapshot.ref.getDownloadURL();
+    print('urlPicture = $urlPicture');
+    insertValueToFireStore();
+  }
+
+  Future<void> insertValueToFireStore() async {
+    FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+
+    Map<String, dynamic> map = Map();
+    map['name'] = name;
+    map['detail'] = detail;
+    map['path_image'] = urlPicture;
+
+    await firebaseFirestore.collection('product').doc().set(map).then((value) {
+      print('success');
+      MaterialPageRoute route = MaterialPageRoute(
+        builder: (BuildContext context) => MyService(),
+      );
+      Navigator.of(context).pushAndRemoveUntil(route, (value) => false);
+    });
   }
 
   Future<void> showAlert(String title, String message) {
