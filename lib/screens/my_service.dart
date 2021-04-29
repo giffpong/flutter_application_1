@@ -34,6 +34,7 @@ class _MyServiceState extends State<MyService> {
         setState(() {
           currentWidget = ShowListProduct();
         });
+        Navigator.pop(context);
       },
       subtitle: Text('Show All List Product'),
     );
@@ -51,6 +52,7 @@ class _MyServiceState extends State<MyService> {
         setState(() {
           currentWidget = AddListProduct();
         });
+        Navigator.pop(context);
       },
       subtitle: Text('Add New Product to Database'),
     );
